@@ -57,8 +57,8 @@ class TranscriptSegment:
     @property
     def start_time(self) -> Optional[float]:
         """Get the segment start time in seconds from meeting start."""
-        # Try different possible start time fields
-        for time_field in ['start_time', 'startTime', 'offset', 'start']:
+        # Try different possible start time fields, including Granola's startSec
+        for time_field in ['start_time', 'startTime', 'startSec', 'offset', 'start']:
             if time_field in self._data:
                 try:
                     return float(self._data[time_field])
@@ -144,27 +144,44 @@ class Transcript:
             # Simple text transcript - create a single segment
             segments.append(TranscriptSegment({'text': self._raw_data}))
         elif isinstance(self._raw_data, list):
-            # List of segments
+            # List of segments (Granola format when transcript is directly a list)
             for item in self._raw_data:
                 if isinstance(item, dict):
-                    segments.append(TranscriptSegment(item))
+                    # Convert Granola format to expected format
+                    segment_data = {
+                        'text': item.get('text', ''),
+                        'speaker': item.get('speaker', 'Unknown'),
+                        'start_time': item.get('startSec', 0)
+                    }
+                    segments.append(TranscriptSegment(segment_data))
                 elif isinstance(item, str):
                     segments.append(TranscriptSegment({'text': item}))
         elif isinstance(self._raw_data, dict):
             # Dictionary containing segments or text
-            # Try to find segments in the data
-            for segments_field in ['segments', 'items', 'entries', 'messages']:
-                if segments_field in self._raw_data:
-                    segment_data = self._raw_data[segments_field]
-                    if isinstance(segment_data, list):
-                        for item in segment_data:
-                            if isinstance(item, dict):
-                                segments.append(TranscriptSegment(item))
-                    break
+            # Try Granola format first (chunks field)
+            if 'chunks' in self._raw_data and isinstance(self._raw_data['chunks'], list):
+                for chunk in self._raw_data['chunks']:
+                    if isinstance(chunk, dict):
+                        segment_data = {
+                            'text': chunk.get('text', ''),
+                            'speaker': chunk.get('speaker', 'Unknown'),
+                            'start_time': chunk.get('startSec', 0)
+                        }
+                        segments.append(TranscriptSegment(segment_data))
+            else:
+                # Try to find segments in other possible fields
+                for segments_field in ['segments', 'items', 'entries', 'messages']:
+                    if segments_field in self._raw_data:
+                        segment_data = self._raw_data[segments_field]
+                        if isinstance(segment_data, list):
+                            for item in segment_data:
+                                if isinstance(item, dict):
+                                    segments.append(TranscriptSegment(item))
+                        break
 
-            # If no segments found, treat the whole dict as a single segment
-            if not segments:
-                segments.append(TranscriptSegment(self._raw_data))
+                # If no segments found, treat the whole dict as a single segment
+                if not segments:
+                    segments.append(TranscriptSegment(self._raw_data))
 
         return segments
 

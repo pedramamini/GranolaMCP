@@ -139,23 +139,85 @@ class Meeting:
             # Try to find transcript data
             transcript_data = None
 
-            for transcript_field in ['transcript', 'transcription', 'content', 'text']:
-                if transcript_field in self._data:
-                    transcript_data = self._data[transcript_field]
-                    break
+            # Check for transcript_data field added by parser
+            if 'transcript_data' in self._data:
+                transcript_data = self._data['transcript_data']
+            else:
+                # Fallback to other possible transcript fields
+                for transcript_field in ['transcript', 'transcription', 'content', 'text']:
+                    if transcript_field in self._data:
+                        transcript_data = self._data[transcript_field]
+                        break
 
             if transcript_data:
                 self._transcript = Transcript(transcript_data)
 
         return self._transcript
 
+    def _extract_text_from_structured_content(self, content_list: List[Dict]) -> str:
+        """Extract plain text from Granola's structured content format."""
+        texts = []
+        
+        def extract_from_node(node):
+            if not isinstance(node, dict):
+                return
+            
+            node_type = node.get('type')
+            
+            if node_type == 'text':
+                text = node.get('text', '')
+                if text:
+                    texts.append(text)
+            elif node_type == 'heading':
+                content = node.get('content', [])
+                heading_texts = []
+                for item in content:
+                    if isinstance(item, dict) and item.get('type') == 'text':
+                        heading_texts.append(item.get('text', ''))
+                if heading_texts:
+                    texts.append('\n### ' + ''.join(heading_texts) + '\n')
+            elif node_type in ['paragraph', 'listItem', 'bulletList']:
+                content = node.get('content', [])
+                if node_type == 'listItem':
+                    texts.append('- ')
+                for item in content:
+                    extract_from_node(item)
+                if node_type in ['paragraph', 'listItem']:
+                    texts.append('\n')
+            elif 'content' in node:
+                for item in node.get('content', []):
+                    extract_from_node(item)
+        
+        for item in content_list:
+            extract_from_node(item)
+        
+        return ''.join(texts).strip()
+
     @property
     def summary(self) -> Optional[str]:
         """Get the meeting summary."""
+        # Try Granola-specific fields first
+        if 'notes_markdown' in self._data and self._data['notes_markdown']:
+            return str(self._data['notes_markdown'])
+        
+        if 'notes_plain' in self._data and self._data['notes_plain']:
+            return str(self._data['notes_plain'])
+        
         # Try different possible summary fields
-        for summary_field in ['summary', 'description', 'notes', 'overview']:
-            if summary_field in self._data:
-                return str(self._data[summary_field])
+        for summary_field in ['summary', 'description', 'overview']:
+            if summary_field in self._data and self._data[summary_field]:
+                value = self._data[summary_field]
+                if isinstance(value, str):
+                    return value
+        
+        # Check document panels for structured notes content
+        if 'panel_content' in self._data:
+            panel_content = self._data['panel_content']
+            if isinstance(panel_content, dict):
+                content_list = panel_content.get('content', [])
+                if content_list:
+                    return self._extract_text_from_structured_content(content_list)
+        
         return None
 
     @property

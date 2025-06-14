@@ -12,7 +12,7 @@ from ...core.parser import GranolaParser
 from ...core.meeting import Meeting
 from ...utils.date_parser import parse_date, get_date_range
 from ..formatters.colors import (
-    Colors, colorize, format_duration, format_participant_count,
+    Colors, colorize, format_duration,
     format_meeting_id, print_error, print_info, muted
 )
 from ..formatters.table import Table, TableAlignment
@@ -228,13 +228,14 @@ class ListCommand:
             return
 
         # Create table
-        headers = ['ID', 'Title', 'Date', 'Duration', 'Participants']
+        headers = ['ID', 'Title', 'Date', 'Duration', 'Transcript', 'Summary']
         alignments = [
             TableAlignment.LEFT,
             TableAlignment.LEFT,
             TableAlignment.LEFT,
             TableAlignment.RIGHT,
-            TableAlignment.CENTER
+            TableAlignment.RIGHT,
+            TableAlignment.RIGHT
         ]
 
         table = Table(headers, alignments)
@@ -252,13 +253,39 @@ class ListCommand:
             if meeting.start_time:
                 date_str = meeting.start_time.strftime("%m/%d %H:%M")
 
-            duration_str = format_duration(
-                meeting.duration.total_seconds() if meeting.duration else None
-            )
+            # Calculate duration from created_at to updated_at
+            duration_str = muted("Unknown")
+            if hasattr(meeting, '_data') and 'created_at' in meeting._data and 'updated_at' in meeting._data:
+                try:
+                    from datetime import datetime
+                    created = datetime.fromisoformat(meeting._data['created_at'].replace('Z', '+00:00'))
+                    updated = datetime.fromisoformat(meeting._data['updated_at'].replace('Z', '+00:00'))
+                    duration_seconds = (updated - created).total_seconds()
+                    if duration_seconds > 60:  # Only show if > 1 minute
+                        duration_str = format_duration(duration_seconds)
+                except:
+                    pass
 
-            participant_count = format_participant_count(len(meeting.participants))
+            # Get transcript word count
+            transcript_str = muted("--")
+            if meeting.has_transcript():
+                transcript = meeting.transcript
+                word_count = transcript.word_count
+                if word_count > 0:
+                    if word_count >= 1000:
+                        transcript_str = f"{word_count // 1000:.1f}k"
+                    else:
+                        transcript_str = str(word_count)
 
-            table.add_row([meeting_id, title, date_str, duration_str, participant_count])
+            # Get summary word count  
+            summary_str = muted("--")
+            summary = meeting.summary
+            if summary:
+                word_count = len(summary.split())
+                if word_count > 0:
+                    summary_str = str(word_count)
+
+            table.add_row([meeting_id, title, date_str, duration_str, transcript_str, summary_str])
 
         table.print()
 
