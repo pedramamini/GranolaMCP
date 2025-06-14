@@ -15,6 +15,7 @@ from .commands.list import ListCommand
 from .commands.show import ShowCommand
 from .commands.export import ExportCommand
 from .commands.stats import StatsCommand
+from .commands.json import JsonCommand
 from .formatters.colors import Colors, colorize
 
 
@@ -55,6 +56,11 @@ Examples:
   granola stats --meetings-per-day --last 30d
   granola stats --duration-distribution
   granola stats --participant-frequency
+
+  # Extract JSON data from cache
+  granola json
+  granola json --compact
+  granola json --sort-keys > cache_data.json
 
 For more help on a specific command, use:
   granola <command> --help
@@ -125,6 +131,14 @@ For more help on a specific command, use:
         description='Analyze meeting data and generate comprehensive statistics with ASCII charts'
     )
     StatsCommand.add_arguments(stats_parser)
+
+    # JSON command
+    json_parser = subparsers.add_parser(
+        'json',
+        help='Extract and pretty-print JSON data from cache',
+        description='Extract the embedded JSON data from the Granola cache file and output as valid JSON'
+    )
+    JsonCommand.add_arguments(json_parser)
 
     return parser
 
@@ -227,6 +241,9 @@ def main(argv: Optional[List[str]] = None) -> int:
             return command.execute()
         elif args.command == 'stats':
             command = StatsCommand(granola_parser, args)
+            return command.execute()
+        elif args.command == 'json':
+            command = JsonCommand(granola_parser, args)
             return command.execute()
         else:
             print(colorize(f"Unknown command: {args.command}", Colors.RED), file=sys.stderr)

@@ -319,8 +319,9 @@ class ListCommand:
             int: Exit code (0 for success)
         """
         try:
-            # Load meetings
-            meeting_data = self.parser.get_meetings()
+            # Load meetings with debug flag if verbose is enabled
+            debug_flag = getattr(self.args, 'verbose', False)
+            meeting_data = self.parser.get_meetings(debug=debug_flag)
             meetings = [Meeting(data) for data in meeting_data]
 
             if self.args.verbose:

@@ -94,9 +94,12 @@ class GranolaParser:
                 raise
             raise GranolaParseError(f"Error loading cache file: {e}") from e
 
-    def get_meetings(self) -> List[Dict[str, Any]]:
+    def get_meetings(self, debug: bool = False) -> List[Dict[str, Any]]:
         """
         Get all meetings from the cache.
+
+        Args:
+            debug: If True, print debug information about cache structure
 
         Returns:
             List[Dict[str, Any]]: List of meeting objects
@@ -106,49 +109,113 @@ class GranolaParser:
         """
         cache_data = self.load_cache()
 
+        if debug:
+            print(f"DEBUG: Cache data keys: {list(cache_data.keys())}")
+
         # Look for meetings in common locations
         meetings = None
+        found_location = None
+
+        # Expanded list of possible meeting field names
+        meeting_field_names = [
+            'events', 'meetings', 'sessions', 'data', 'items', 'calls', 'recordings',
+            'transcripts', 'conversations', 'entries', 'history', 'records', 'list',
+            'content', 'cache_data', 'meeting_data', 'session_data', 'event_data'
+        ]
 
         # First check if there's a 'state' key (Granola v3 format)
         if 'state' in cache_data and isinstance(cache_data['state'], dict):
             state_data = cache_data['state']
+            if debug:
+                print(f"DEBUG: Found 'state' key with keys: {list(state_data.keys())}")
+
             # Try different possible keys for meetings within state
-            for key in ['events', 'meetings', 'sessions', 'data', 'items']:
+            for key in meeting_field_names:
                 if key in state_data:
                     meetings = state_data[key]
+                    found_location = f"state.{key}"
+                    if debug:
+                        print(f"DEBUG: Found meetings at {found_location}, type: {type(meetings)}, length: {len(meetings) if isinstance(meetings, list) else 'N/A'}")
                     break
 
             # If no standard key found in state, look for any list in state
             if meetings is None:
-                for value in state_data.values():
-                    if isinstance(value, list):
-                        meetings = value
-                        break
+                if debug:
+                    print("DEBUG: No standard keys found in state, looking for any lists...")
+                for key, value in state_data.items():
+                    if isinstance(value, list) and len(value) > 0:
+                        # Check if this list contains meeting-like objects
+                        first_item = value[0]
+                        if isinstance(first_item, dict):
+                            # Look for meeting-like fields in the first item
+                            meeting_indicators = [
+                                'id', 'meeting_id', 'session_id', 'uuid', 'title', 'name', 'subject',
+                                'start_time', 'startTime', 'created_at', 'timestamp', 'date',
+                                'participants', 'attendees', 'transcript', 'transcription'
+                            ]
+                            found_indicators = [field for field in meeting_indicators if field in first_item]
+                            if found_indicators:
+                                meetings = value
+                                found_location = f"state.{key}"
+                                if debug:
+                                    print(f"DEBUG: Found potential meetings at {found_location} with indicators: {found_indicators}")
+                                break
 
         # Fallback: Try different possible keys for meetings at root level
         if meetings is None:
-            for key in ['events', 'meetings', 'sessions', 'data', 'items']:
+            if debug:
+                print("DEBUG: Looking for meetings at root level...")
+            for key in meeting_field_names:
                 if key in cache_data:
                     meetings = cache_data[key]
+                    found_location = f"root.{key}"
+                    if debug:
+                        print(f"DEBUG: Found meetings at {found_location}, type: {type(meetings)}, length: {len(meetings) if isinstance(meetings, list) else 'N/A'}")
                     break
 
         if meetings is None:
-            # If no standard key found, return the entire cache as meetings
-            # This handles cases where the cache structure is different
-            if isinstance(cache_data, list):
-                meetings = cache_data
-            else:
-                # Look for any list in the cache data
-                for value in cache_data.values():
-                    if isinstance(value, list):
-                        meetings = value
-                        break
+            if debug:
+                print("DEBUG: No standard keys found at root, looking for any lists...")
+            # Look for any list in the cache data that might contain meetings
+            for key, value in cache_data.items():
+                if isinstance(value, list) and len(value) > 0:
+                    # Check if this list contains meeting-like objects
+                    first_item = value[0]
+                    if isinstance(first_item, dict):
+                        # Look for meeting-like fields in the first item
+                        meeting_indicators = [
+                            'id', 'meeting_id', 'session_id', 'uuid', 'title', 'name', 'subject',
+                            'start_time', 'startTime', 'created_at', 'timestamp', 'date',
+                            'participants', 'attendees', 'transcript', 'transcription'
+                        ]
+                        found_indicators = [field for field in meeting_indicators if field in first_item]
+                        if found_indicators:
+                            meetings = value
+                            found_location = f"root.{key}"
+                            if debug:
+                                print(f"DEBUG: Found potential meetings at {found_location} with indicators: {found_indicators}")
+                            break
+
+        # Final fallback: if cache_data itself is a list
+        if meetings is None and isinstance(cache_data, list):
+            meetings = cache_data
+            found_location = "root (entire cache is a list)"
+            if debug:
+                print(f"DEBUG: Using entire cache as meetings list, length: {len(meetings)}")
 
         if meetings is None:
+            if debug:
+                print("DEBUG: No meetings found anywhere in cache structure")
+                print(f"DEBUG: Available cache keys: {list(cache_data.keys()) if isinstance(cache_data, dict) else 'Cache is not a dict'}")
             raise GranolaParseError("No meetings found in cache data")
 
         if not isinstance(meetings, list):
+            if debug:
+                print(f"DEBUG: Found data at {found_location} but it's not a list: {type(meetings)}")
             raise GranolaParseError("Meetings data must be a list")
+
+        if debug:
+            print(f"DEBUG: Successfully found {len(meetings)} meetings at {found_location}")
 
         return meetings
 

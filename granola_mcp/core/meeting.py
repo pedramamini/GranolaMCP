@@ -39,7 +39,7 @@ class Meeting:
     def title(self) -> Optional[str]:
         """Get the meeting title."""
         # Try different possible title fields
-        for title_field in ['title', 'name', 'subject', 'meeting_name']:
+        for title_field in ['title', 'name', 'subject', 'meeting_name', 'summary']:
             if title_field in self._data:
                 return str(self._data[title_field])
         return None
@@ -54,6 +54,16 @@ class Meeting:
                     return convert_utc_to_cst(self._data[time_field])
                 except (ValueError, TypeError):
                     continue
+
+        # Handle Google Calendar format: start.dateTime
+        if 'start' in self._data and isinstance(self._data['start'], dict):
+            start_data = self._data['start']
+            if 'dateTime' in start_data:
+                try:
+                    return convert_utc_to_cst(start_data['dateTime'])
+                except (ValueError, TypeError):
+                    pass
+
         return None
 
     @property
@@ -66,6 +76,16 @@ class Meeting:
                     return convert_utc_to_cst(self._data[time_field])
                 except (ValueError, TypeError):
                     continue
+
+        # Handle Google Calendar format: end.dateTime
+        if 'end' in self._data and isinstance(self._data['end'], dict):
+            end_data = self._data['end']
+            if 'dateTime' in end_data:
+                try:
+                    return convert_utc_to_cst(end_data['dateTime'])
+                except (ValueError, TypeError):
+                    pass
+
         return None
 
     @property

@@ -166,7 +166,7 @@ class MCPTools:
 
         Args:
             query: Text search in title/content
-            from_date: Start date filter
+            from_date: Start date filter (default: 3 days ago if no date filters specified)
             to_date: End date filter
             participant: Participant filter
             limit: Maximum number of results
@@ -176,6 +176,10 @@ class MCPTools:
         """
         try:
             meetings = self._get_meetings()
+
+            # Apply default 3-day lookback if no date filters specified
+            if not from_date and not to_date:
+                from_date = "3d"
 
             # Apply filters
             if from_date or to_date:
@@ -873,7 +877,7 @@ class MCPTools:
         return [
             {
                 "name": "search_meetings",
-                "description": "Search meetings with flexible filters including text search, date range, and participant filters",
+                "description": "Search meetings with flexible filters including text search, date range, and participant filters. Defaults to last 3 days if no date filters specified.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -883,7 +887,7 @@ class MCPTools:
                         },
                         "from_date": {
                             "type": "string",
-                            "description": "Start date (ISO format or relative like '30d') (optional)"
+                            "description": "Start date (ISO format or relative like '30d') (optional, defaults to 3d if no date filters)"
                         },
                         "to_date": {
                             "type": "string",
