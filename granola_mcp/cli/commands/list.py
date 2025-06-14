@@ -75,6 +75,12 @@ class ListCommand:
             help='Filter meetings by participant email/name'
         )
 
+        parser.add_argument(
+            '--folder',
+            type=str,
+            help='Filter meetings by folder/list name (case-insensitive)'
+        )
+
         # Sorting options
         parser.add_argument(
             '--sort-by',
@@ -193,6 +199,29 @@ class ListCommand:
 
         return filtered_meetings
 
+    def _filter_meetings_by_folder(self, meetings: List[Meeting]) -> List[Meeting]:
+        """
+        Filter meetings by folder/list name.
+
+        Args:
+            meetings: List of meetings to filter
+
+        Returns:
+            List[Meeting]: Filtered meetings
+        """
+        if not self.args.folder:
+            return meetings
+
+        search_term = self.args.folder.lower()
+        filtered_meetings = []
+
+        for meeting in meetings:
+            folder_name = meeting.folder_name or ""
+            if search_term in folder_name.lower():
+                filtered_meetings.append(meeting)
+
+        return filtered_meetings
+
     def _sort_meetings(self, meetings: List[Meeting]) -> List[Meeting]:
         """
         Sort meetings by specified criteria.
@@ -228,14 +257,15 @@ class ListCommand:
             return
 
         # Create table
-        headers = ['ID', 'Title', 'Date', 'Duration', 'Transcript', 'Summary']
+        headers = ['ID', 'Title', 'Date', 'Duration', 'Transcript', 'Summary', 'Folder']
         alignments = [
             TableAlignment.LEFT,
             TableAlignment.LEFT,
             TableAlignment.LEFT,
             TableAlignment.RIGHT,
             TableAlignment.RIGHT,
-            TableAlignment.RIGHT
+            TableAlignment.RIGHT,
+            TableAlignment.LEFT
         ]
 
         table = Table(headers, alignments)
@@ -253,18 +283,27 @@ class ListCommand:
             if meeting.start_time:
                 date_str = meeting.start_time.strftime("%m/%d %H:%M")
 
-            # Calculate duration from created_at to updated_at
+            # Try to get actual meeting duration
             duration_str = muted("Unknown")
-            if hasattr(meeting, '_data') and 'created_at' in meeting._data and 'updated_at' in meeting._data:
-                try:
-                    from datetime import datetime
-                    created = datetime.fromisoformat(meeting._data['created_at'].replace('Z', '+00:00'))
-                    updated = datetime.fromisoformat(meeting._data['updated_at'].replace('Z', '+00:00'))
-                    duration_seconds = (updated - created).total_seconds()
-                    if duration_seconds > 60:  # Only show if > 1 minute
-                        duration_str = format_duration(duration_seconds)
-                except:
-                    pass
+            
+            # First try the meeting's duration property (uses start/end times)
+            if meeting.duration:
+                duration_str = format_duration(meeting.duration.total_seconds())
+            else:
+                # Try to get duration from transcript timing
+                if meeting.has_transcript():
+                    try:
+                        transcript = meeting.transcript
+                        segments = transcript.segments
+                        if segments and len(segments) > 0:
+                            first = segments[0]
+                            last = segments[-1]
+                            if hasattr(last, 'end_time') and hasattr(first, 'start_time') and last.end_time and first.start_time:
+                                duration_seconds = last.end_time - first.start_time
+                                if duration_seconds > 60:  # Only show if > 1 minute
+                                    duration_str = format_duration(duration_seconds)
+                    except:
+                        pass
 
             # Get transcript word count
             transcript_str = muted("--")
@@ -285,7 +324,12 @@ class ListCommand:
                 if word_count > 0:
                     summary_str = str(word_count)
 
-            table.add_row([meeting_id, title, date_str, duration_str, transcript_str, summary_str])
+            # Get folder name
+            folder_str = meeting.folder_name or muted("--")
+            if folder_str and len(folder_str) > 15:
+                folder_str = folder_str[:12] + "..."
+
+            table.add_row([meeting_id, title, date_str, duration_str, transcript_str, summary_str, folder_str])
 
         table.print()
 
@@ -358,6 +402,7 @@ class ListCommand:
             meetings = self._filter_meetings_by_date(meetings)
             meetings = self._filter_meetings_by_title(meetings)
             meetings = self._filter_meetings_by_participant(meetings)
+            meetings = self._filter_meetings_by_folder(meetings)
 
             # Sort meetings
             meetings = self._sort_meetings(meetings)

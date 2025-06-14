@@ -36,8 +36,8 @@ class TranscriptSegment:
     @property
     def speaker(self) -> Optional[str]:
         """Get the speaker name."""
-        # Try different possible speaker fields
-        for speaker_field in ['speaker', 'user', 'name', 'participant']:
+        # Try different possible speaker fields, including Granola's source field
+        for speaker_field in ['speaker', 'user', 'name', 'participant', 'source']:
             if speaker_field in self._data:
                 return str(self._data[speaker_field])
         return None
@@ -45,8 +45,8 @@ class TranscriptSegment:
     @property
     def timestamp(self) -> Optional[datetime.datetime]:
         """Get the segment timestamp in CST."""
-        # Try different possible timestamp fields
-        for time_field in ['timestamp', 'time', 'start_time', 'created_at']:
+        # Try different possible timestamp fields, including Granola's absolute timestamps
+        for time_field in ['timestamp', 'time', 'start_timestamp', 'created_at']:
             if time_field in self._data:
                 try:
                     return convert_utc_to_cst(self._data[time_field])
@@ -147,13 +147,9 @@ class Transcript:
             # List of segments (Granola format when transcript is directly a list)
             for item in self._raw_data:
                 if isinstance(item, dict):
-                    # Convert Granola format to expected format
-                    segment_data = {
-                        'text': item.get('text', ''),
-                        'speaker': item.get('speaker', 'Unknown'),
-                        'start_time': item.get('startSec', 0)
-                    }
-                    segments.append(TranscriptSegment(segment_data))
+                    # Pass the raw data directly to TranscriptSegment for proper parsing
+                    # The TranscriptSegment class will handle the field mapping
+                    segments.append(TranscriptSegment(item))
                 elif isinstance(item, str):
                     segments.append(TranscriptSegment({'text': item}))
         elif isinstance(self._raw_data, dict):
@@ -226,14 +222,25 @@ class Transcript:
         if not segments:
             return None
 
-        # Find the maximum end time
+        # Try relative timestamps first (more accurate for duration)
         max_end_time = None
         for segment in segments:
             if segment.end_time is not None:
                 if max_end_time is None or segment.end_time > max_end_time:
                     max_end_time = segment.end_time
 
-        return max_end_time
+        if max_end_time is not None:
+            return max_end_time
+        
+        # Fallback: try to calculate from absolute timestamps
+        segments_with_timestamps = [s for s in segments if s.timestamp is not None]
+        if len(segments_with_timestamps) >= 2:
+            first_timestamp = min(s.timestamp for s in segments_with_timestamps)
+            last_timestamp = max(s.timestamp for s in segments_with_timestamps)
+            duration_timedelta = last_timestamp - first_timestamp
+            return duration_timedelta.total_seconds()
+
+        return None
 
     def get_segments_by_speaker(self, speaker: str) -> List[TranscriptSegment]:
         """

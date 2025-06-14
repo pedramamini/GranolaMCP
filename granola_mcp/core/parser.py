@@ -140,6 +140,23 @@ class GranolaParser:
         if debug:
             print(f"DEBUG: Found {len(document_panels)} document panels")
 
+        # Get document lists (folders) for organization
+        document_lists = state_data.get('documentLists', {})
+        document_lists_metadata = state_data.get('documentListsMetadata', {})
+        if debug:
+            print(f"DEBUG: Found {len(document_lists)} document lists/folders")
+
+        # Create reverse mapping: meeting_id -> folder_info
+        meeting_to_folder = {}
+        for list_id, meeting_ids in document_lists.items():
+            folder_info = document_lists_metadata.get(list_id, {})
+            folder_name = folder_info.get('title', 'Unknown')
+            for meeting_id in meeting_ids:
+                meeting_to_folder[meeting_id] = {
+                    'folder_id': list_id,
+                    'folder_name': folder_name
+                }
+
         # Combine documents with their metadata, transcripts, and panels
         meetings = []
         for doc_id, doc_data in documents.items():
@@ -167,6 +184,15 @@ class GranolaParser:
                     if panel_content and isinstance(panel_content, dict):
                         meeting['panel_content'] = panel_content
                         break
+
+            # Add folder information
+            if doc_id in meeting_to_folder:
+                folder_info = meeting_to_folder[doc_id]
+                meeting['folder_name'] = folder_info['folder_name']
+                meeting['folder_id'] = folder_info['folder_id']
+            else:
+                meeting['folder_name'] = None
+                meeting['folder_id'] = None
 
             meetings.append(meeting)
 
