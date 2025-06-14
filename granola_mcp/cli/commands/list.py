@@ -7,7 +7,7 @@ including date ranges, title search, and participant filtering.
 
 import argparse
 import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from ...core.parser import GranolaParser
 from ...core.meeting import Meeting
 from ...utils.date_parser import parse_date, get_date_range
@@ -216,6 +216,42 @@ class ListCommand:
 
         return sorted(meetings, key=sort_key, reverse=self.args.reverse)
 
+    def _calculate_stats(self, meetings: List[Meeting]) -> Dict[str, Any]:
+        """
+        Calculate statistics for the meetings.
+
+        Args:
+            meetings: List of meetings to calculate stats for
+
+        Returns:
+            Dict[str, Any]: Statistics dictionary
+        """
+        stats = {
+            'total_meetings': len(meetings),
+            'total_duration_seconds': 0,
+            'meetings_with_duration': 0,
+            'unique_dates': set()
+        }
+
+        for meeting in meetings:
+            if meeting.duration:
+                stats['total_duration_seconds'] += meeting.duration.total_seconds()
+                stats['meetings_with_duration'] += 1
+            
+            if meeting.start_time:
+                # Track unique dates (just the date part, not time)
+                date_only = meeting.start_time.date()
+                stats['unique_dates'].add(date_only)
+
+        stats['unique_days'] = len(stats['unique_dates'])
+        stats['avg_hours_per_day'] = 0
+
+        if stats['unique_days'] > 0 and stats['total_duration_seconds'] > 0:
+            total_hours = stats['total_duration_seconds'] / 3600
+            stats['avg_hours_per_day'] = total_hours / stats['unique_days']
+
+        return stats
+
     def _format_table_output(self, meetings: List[Meeting]) -> None:
         """
         Format meetings as a table.
@@ -261,6 +297,25 @@ class ListCommand:
             table.add_row([meeting_id, title, date_str, duration_str, participant_count])
 
         table.print()
+
+        # Add statistics at the bottom
+        stats = self._calculate_stats(meetings)
+        if stats['total_meetings'] > 0:
+            print()  # Empty line before stats
+            total_duration_str = format_duration(stats['total_duration_seconds'])
+            
+            # Format average hours per day
+            avg_hours = stats['avg_hours_per_day']
+            if avg_hours >= 1:
+                avg_str = f"{avg_hours:.1f}h"
+            elif avg_hours > 0:
+                avg_minutes = avg_hours * 60
+                avg_str = f"{avg_minutes:.0f}m"
+            else:
+                avg_str = "0m"
+
+            print(f"📊 Total meeting time: {colorize(total_duration_str, Colors.CYAN)}")
+            print(f"📈 Average per day ({stats['unique_days']} days): {colorize(avg_str, Colors.GREEN)}")
 
     def _format_simple_output(self, meetings: List[Meeting]) -> None:
         """
