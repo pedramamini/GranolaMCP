@@ -151,11 +151,20 @@ class Meeting:
 
     @property
     def summary(self) -> Optional[str]:
-        """Get the meeting summary."""
-        # Try different possible summary fields
-        for summary_field in ['summary', 'description', 'notes', 'overview']:
+        """Get the AI-generated meeting summary."""
+        # Try different possible AI summary fields
+        for summary_field in ['summary', 'ai_summary', 'description', 'overview']:
             if summary_field in self._data:
                 return str(self._data[summary_field])
+        return None
+
+    @property
+    def human_notes(self) -> Optional[str]:
+        """Get the human-taken meeting notes."""
+        # Try different possible human notes fields
+        for notes_field in ['notes', 'human_notes', 'user_notes', 'manual_notes']:
+            if notes_field in self._data:
+                return str(self._data[notes_field])
         return None
 
     @property

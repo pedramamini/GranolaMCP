@@ -63,7 +63,13 @@ class ExportCommand:
         parser.add_argument(
             '--no-summary',
             action='store_true',
-            help='Exclude summary/notes from export'
+            help='Exclude AI summary from export'
+        )
+
+        parser.add_argument(
+            '--no-notes',
+            action='store_true',
+            help='Exclude human notes from export'
         )
 
         parser.add_argument(
@@ -143,6 +149,7 @@ class ExportCommand:
         include_metadata = not self.args.no_metadata
         include_participants = not self.args.no_participants
         include_summary = not self.args.no_summary
+        include_notes = not self.args.no_notes
         include_tags = not self.args.no_tags
         include_speakers = not self.args.no_speakers
         include_timestamps = self.args.timestamps
@@ -153,6 +160,7 @@ class ExportCommand:
             include_metadata=include_metadata,
             include_participants=include_participants,
             include_summary=include_summary,
+            include_notes=include_notes,
             include_tags=include_tags,
             include_speakers=include_speakers,
             include_timestamps=include_timestamps

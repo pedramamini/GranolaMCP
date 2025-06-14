@@ -53,7 +53,13 @@ class ShowCommand:
         parser.add_argument(
             '--notes',
             action='store_true',
-            help='Include meeting notes/summary'
+            help='Include human-taken meeting notes'
+        )
+
+        parser.add_argument(
+            '--summary',
+            action='store_true',
+            help='Include AI-generated meeting summary'
         )
 
         parser.add_argument(
@@ -65,7 +71,7 @@ class ShowCommand:
         parser.add_argument(
             '--all',
             action='store_true',
-            help='Show all available information (equivalent to --transcript --notes --metadata)'
+            help='Show all available information (equivalent to --transcript --notes --summary --metadata)'
         )
 
         # Transcript formatting options
@@ -169,7 +175,7 @@ class ShowCommand:
 
     def _show_summary(self, meeting: Meeting) -> None:
         """
-        Show meeting summary/notes.
+        Show AI-generated meeting summary.
 
         Args:
             meeting: Meeting to display
@@ -178,8 +184,22 @@ class ShowCommand:
         if not summary:
             return
 
-        print_section("Summary")
+        print_section("AI Summary")
         print(summary)
+
+    def _show_human_notes(self, meeting: Meeting) -> None:
+        """
+        Show human-taken meeting notes.
+
+        Args:
+            meeting: Meeting to display
+        """
+        notes = meeting.human_notes
+        if not notes:
+            return
+
+        print_section("Human Notes")
+        print(notes)
 
     def _show_tags(self, meeting: Meeting) -> None:
         """
@@ -301,6 +321,7 @@ class ShowCommand:
             # Determine what to show
             show_transcript = self.args.transcript or self.args.all
             show_notes = self.args.notes or self.args.all
+            show_summary = self.args.summary or self.args.all
             show_metadata = self.args.metadata or self.args.all
 
             # Show basic information
@@ -309,8 +330,12 @@ class ShowCommand:
             # Show participants
             self._show_participants(meeting)
 
-            # Show summary/notes
+            # Show human notes
             if show_notes:
+                self._show_human_notes(meeting)
+
+            # Show AI summary
+            if show_summary:
                 self._show_summary(meeting)
 
             # Show tags

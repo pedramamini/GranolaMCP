@@ -47,6 +47,12 @@ Examples:
   # Show meeting with transcript
   granola show <meeting-id> --transcript
 
+  # Show meeting with human notes
+  granola show <meeting-id> --notes
+
+  # Show meeting with AI summary
+  granola show <meeting-id> --summary
+
   # Export meeting to markdown
   granola export <meeting-id>
   granola export <meeting-id> > meeting.md

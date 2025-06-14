@@ -128,22 +128,45 @@ def format_participants_section(meeting: Meeting) -> str:
 
 def format_summary_section(meeting: Meeting) -> str:
     """
-    Format summary/notes section in markdown.
+    Format AI summary section in markdown.
 
     Args:
         meeting: Meeting object
 
     Returns:
-        str: Formatted markdown summary section
+        str: Formatted markdown AI summary section
     """
     summary = meeting.summary
     if not summary:
         return ""
 
     lines = []
-    lines.append("## Summary")
+    lines.append("## AI Summary")
     lines.append("")
     lines.append(escape_markdown(summary))
+    lines.append("")
+
+    return "\n".join(lines)
+
+
+def format_notes_section(meeting: Meeting) -> str:
+    """
+    Format human notes section in markdown.
+
+    Args:
+        meeting: Meeting object
+
+    Returns:
+        str: Formatted markdown human notes section
+    """
+    notes = meeting.human_notes
+    if not notes:
+        return ""
+
+    lines = []
+    lines.append("## Human Notes")
+    lines.append("")
+    lines.append(escape_markdown(notes))
     lines.append("")
 
     return "\n".join(lines)
@@ -240,8 +263,9 @@ def format_tags_section(meeting: Meeting) -> str:
 
 def export_meeting_to_markdown(meeting: Meeting, include_transcript: bool = True,
                               include_metadata: bool = True, include_participants: bool = True,
-                              include_summary: bool = True, include_tags: bool = True,
-                              include_speakers: bool = True, include_timestamps: bool = False) -> str:
+                              include_summary: bool = True, include_notes: bool = True,
+                              include_tags: bool = True, include_speakers: bool = True,
+                              include_timestamps: bool = False) -> str:
     """
     Export a complete meeting to markdown format.
 
@@ -250,7 +274,8 @@ def export_meeting_to_markdown(meeting: Meeting, include_transcript: bool = True
         include_transcript: Whether to include transcript
         include_metadata: Whether to include metadata
         include_participants: Whether to include participants
-        include_summary: Whether to include summary/notes
+        include_summary: Whether to include AI summary
+        include_notes: Whether to include human notes
         include_tags: Whether to include tags
         include_speakers: Whether to include speaker names in transcript
         include_timestamps: Whether to include timestamps in transcript
@@ -275,7 +300,13 @@ def export_meeting_to_markdown(meeting: Meeting, include_transcript: bool = True
         if participants_section.strip():
             sections.append(participants_section)
 
-    # Summary
+    # Human Notes
+    if include_notes:
+        notes_section = format_notes_section(meeting)
+        if notes_section.strip():
+            sections.append(notes_section)
+
+    # AI Summary
     if include_summary:
         summary_section = format_summary_section(meeting)
         if summary_section.strip():
