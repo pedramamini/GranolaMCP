@@ -310,29 +310,41 @@ class Meeting:
         return ''.join(texts).strip()
 
     @property
-    def summary(self) -> Optional[str]:
-        """Get the meeting summary."""
-        # Try Granola-specific fields first
+    def human_notes(self) -> Optional[str]:
+        """Get human-taken notes for the meeting."""
+        # Try human-specific note fields first (prioritize human-authored content)
+        for notes_field in ['notes', 'human_notes', 'user_notes', 'manual_notes']:
+            if notes_field in self._data and self._data[notes_field]:
+                value = self._data[notes_field]
+                if isinstance(value, str):
+                    return value
+        
+        # Try Granola-specific note fields that might be human-authored
         if 'notes_markdown' in self._data and self._data['notes_markdown']:
             return str(self._data['notes_markdown'])
         
         if 'notes_plain' in self._data and self._data['notes_plain']:
             return str(self._data['notes_plain'])
         
-        # Try different possible summary fields
-        for summary_field in ['summary', 'description', 'overview']:
-            if summary_field in self._data and self._data[summary_field]:
-                value = self._data[summary_field]
-                if isinstance(value, str):
-                    return value
-        
-        # Check document panels for structured notes content
+        # Check document panels for structured notes content (often user-authored)
         if 'panel_content' in self._data:
             panel_content = self._data['panel_content']
             if isinstance(panel_content, dict):
                 content_list = panel_content.get('content', [])
                 if content_list:
                     return self._extract_text_from_structured_content(content_list)
+        
+        return None
+
+    @property
+    def summary(self) -> Optional[str]:
+        """Get the AI-generated meeting summary."""
+        # Try AI-specific summary fields first (prioritize AI-generated content)
+        for summary_field in ['summary', 'ai_summary', 'description', 'overview']:
+            if summary_field in self._data and self._data[summary_field]:
+                value = self._data[summary_field]
+                if isinstance(value, str):
+                    return value
         
         return None
 

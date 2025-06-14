@@ -51,9 +51,15 @@ class ShowCommand:
         )
 
         parser.add_argument(
+            '--notes',
+            action='store_true',
+            help='Include human-taken notes'
+        )
+
+        parser.add_argument(
             '--summary',
             action='store_true',
-            help='Include meeting summary/notes'
+            help='Include AI-generated summary'
         )
 
         parser.add_argument(
@@ -65,7 +71,7 @@ class ShowCommand:
         parser.add_argument(
             '--all',
             action='store_true',
-            help='Show all available information (equivalent to --transcript --summary --metadata)'
+            help='Show all available information (equivalent to --transcript --notes --summary --metadata)'
         )
 
         # Transcript formatting options
@@ -167,9 +173,23 @@ class ShowCommand:
         print_section("Participants")
         print_list_items(participants)
 
+    def _show_human_notes(self, meeting: Meeting) -> None:
+        """
+        Show human-taken notes.
+
+        Args:
+            meeting: Meeting to display
+        """
+        notes = meeting.human_notes
+        if not notes:
+            return
+
+        print_section("Human Notes")
+        print(notes)
+
     def _show_summary(self, meeting: Meeting) -> None:
         """
-        Show meeting summary/notes.
+        Show AI-generated summary.
 
         Args:
             meeting: Meeting to display
@@ -178,7 +198,7 @@ class ShowCommand:
         if not summary:
             return
 
-        print_section("Summary")
+        print_section("AI Summary")
         print(summary)
 
     def _show_tags(self, meeting: Meeting) -> None:
@@ -300,6 +320,7 @@ class ShowCommand:
 
             # Determine what to show
             show_transcript = self.args.transcript or self.args.all
+            show_notes = self.args.notes or self.args.all
             show_summary = self.args.summary or self.args.all
             show_metadata = self.args.metadata or self.args.all
 
@@ -309,8 +330,13 @@ class ShowCommand:
             # Show participants
             self._show_participants(meeting)
 
-            # Show summary (always show if available by default)
-            self._show_summary(meeting)
+            # Show human notes if requested
+            if show_notes:
+                self._show_human_notes(meeting)
+
+            # Show AI summary if requested
+            if show_summary:
+                self._show_summary(meeting)
 
             # Show tags
             self._show_tags(meeting)

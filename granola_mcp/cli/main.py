@@ -44,6 +44,15 @@ Examples:
   # Show meeting details
   granola show <meeting-id>
 
+  # Show meeting with human notes
+  granola show <meeting-id> --notes
+
+  # Show meeting with AI summary
+  granola show <meeting-id> --summary
+
+  # Show meeting with both notes and summary
+  granola show <meeting-id> --notes --summary
+
   # Show meeting with transcript
   granola show <meeting-id> --transcript
 
