@@ -175,10 +175,24 @@ class GranolaParser:
             if doc_id in transcripts:
                 meeting['transcript_data'] = transcripts[doc_id]
 
-            # Add document panels content (structured notes)
+            # Add document panels content (AI summaries and structured notes)
             if doc_id in document_panels:
                 panels = document_panels[doc_id]
-                # Look for the first panel with content (usually the Summary panel)
+                
+                # Extract AI summaries from original_content (HTML format)
+                ai_summaries = []
+                for panel_id, panel_data in panels.items():
+                    original_content = panel_data.get('original_content', '')
+                    if original_content and isinstance(original_content, str):
+                        # Skip panels that are just links
+                        if not original_content.strip().startswith('<hr>'):
+                            ai_summaries.append(original_content)
+                
+                if ai_summaries:
+                    # Combine all AI summaries into one
+                    meeting['ai_summary_html'] = '\n\n'.join(ai_summaries)
+                
+                # Look for the first panel with structured content (for fallback)
                 for panel_id, panel_data in panels.items():
                     panel_content = panel_data.get('content')
                     if panel_content and isinstance(panel_content, dict):

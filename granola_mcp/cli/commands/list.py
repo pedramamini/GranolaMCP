@@ -293,11 +293,12 @@ class ListCommand:
             return
 
         # Create table
-        headers = ['ID', 'Title', 'Date', 'Duration', 'Transcript', 'Summary', 'Folder']
+        headers = ['ID', 'Title', 'Date', 'Duration', 'Transcript', 'Summary', 'Notes', 'Folder']
         alignments = [
             TableAlignment.LEFT,
             TableAlignment.LEFT,
             TableAlignment.LEFT,
+            TableAlignment.RIGHT,
             TableAlignment.RIGHT,
             TableAlignment.RIGHT,
             TableAlignment.RIGHT,
@@ -352,7 +353,7 @@ class ListCommand:
                     else:
                         transcript_str = str(word_count)
 
-            # Get summary word count  
+            # Get AI summary word count
             summary_str = muted("--")
             summary = meeting.summary
             if summary:
@@ -360,12 +361,20 @@ class ListCommand:
                 if word_count > 0:
                     summary_str = str(word_count)
 
+            # Get human notes word count
+            notes_str = muted("--")
+            notes = meeting.human_notes
+            if notes:
+                word_count = len(notes.split())
+                if word_count > 0:
+                    notes_str = str(word_count)
+
             # Get folder name
             folder_str = meeting.folder_name or muted("--")
             if folder_str and len(folder_str) > 15:
                 folder_str = folder_str[:12] + "..."
 
-            table.add_row([meeting_id, title, date_str, duration_str, transcript_str, summary_str, folder_str])
+            table.add_row([meeting_id, title, date_str, duration_str, transcript_str, summary_str, notes_str, folder_str])
 
         table.print()
 

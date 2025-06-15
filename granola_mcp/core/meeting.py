@@ -312,35 +312,60 @@ class Meeting:
     @property
     def summary(self) -> Optional[str]:
         """Get the AI-generated meeting summary."""
-        # Try different possible AI summary fields
+        if not self._data:
+            return None
+            
+        # Check for AI summary from document panels (HTML format)
+        if 'ai_summary_html' in self._data:
+            html_content = self._data['ai_summary_html']
+            if html_content and html_content.strip():
+                # Convert HTML to markdown-like text
+                import re
+                # Convert HTML to text
+                text = html_content
+                text = re.sub(r'<h1>(.*?)</h1>', r'# \1', text)
+                text = re.sub(r'<h2>(.*?)</h2>', r'## \1', text)
+                text = re.sub(r'<h3>(.*?)</h3>', r'### \1', text)
+                text = re.sub(r'<li>(.*?)</li>', r'- \1', text)
+                text = re.sub(r'<ul>', '', text)
+                text = re.sub(r'</ul>', '', text)
+                text = re.sub(r'<p>(.*?)</p>', r'\1', text)
+                text = re.sub(r'<a href="(.*?)">(.*?)</a>', r'[\2](\1)', text)
+                text = re.sub(r'<[^>]+>', '', text)  # Remove any remaining HTML tags
+                text = re.sub(r'\n\s*\n', '\n\n', text)  # Clean up extra whitespace
+                return text.strip()
+        
+        # Try different possible AI summary fields (string fields)
         for summary_field in ['summary', 'ai_summary', 'description', 'overview']:
-            if summary_field in self._data:
-                return str(self._data[summary_field])
+            if summary_field in self._data and self._data[summary_field]:
+                value = self._data[summary_field]
+                if isinstance(value, str) and value.strip():
+                    return value
+        
         return None
 
     @property
     def human_notes(self) -> Optional[str]:
         """Get the human-taken meeting notes."""
-        # Try different possible human notes fields
-        for notes_field in ['notes', 'human_notes', 'user_notes', 'manual_notes']:
-            if notes_field in self._data:
-                return str(self._data[notes_field])
-        return None
-        
-        # Try different possible summary fields
-        for summary_field in ['summary', 'description', 'overview']:
-            if summary_field in self._data and self._data[summary_field]:
-                value = self._data[summary_field]
-                if isinstance(value, str):
-                    return value
-        
-        # Check document panels for structured notes content
-        if 'panel_content' in self._data:
-            panel_content = self._data['panel_content']
-            if isinstance(panel_content, dict):
-                content_list = panel_content.get('content', [])
+        if not self._data:
+            return None
+            
+        # Check notes field for structured content (transcript-like content)
+        if 'notes' in self._data:
+            notes_content = self._data['notes']
+            if isinstance(notes_content, dict) and 'content' in notes_content:
+                content_list = notes_content.get('content', [])
                 if content_list:
-                    return self._extract_text_from_structured_content(content_list)
+                    notes = self._extract_text_from_structured_content(content_list)
+                    if notes and notes.strip():
+                        return notes
+        
+        # Fallback to plain text fields
+        for notes_field in ['notes_plain', 'notes_markdown', 'human_notes', 'user_notes', 'manual_notes']:
+            if notes_field in self._data and self._data[notes_field]:
+                value = self._data[notes_field]
+                if isinstance(value, str) and value.strip():
+                    return value
         
         return None
 

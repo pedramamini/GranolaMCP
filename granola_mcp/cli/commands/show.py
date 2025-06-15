@@ -51,7 +51,7 @@ class ShowCommand:
         )
 
         parser.add_argument(
-            '--summary',
+            '--notes',
             action='store_true',
             help='Include human-taken meeting notes'
         )
@@ -156,6 +156,18 @@ class ShowCommand:
         else:
             details.append(("Transcript", muted("Not available")))
 
+        summary = meeting.summary
+        if summary and summary.strip():
+            details.append(("AI Summary", "Available"))
+        else:
+            details.append(("AI Summary", muted("Not available")))
+
+        notes = meeting.human_notes
+        if notes and notes.strip():
+            details.append(("Notes", "Available"))
+        else:
+            details.append(("Notes", muted("Not available")))
+
         if details:
             print_key_value_pairs(details)
 
@@ -181,7 +193,7 @@ class ShowCommand:
             meeting: Meeting to display
         """
         summary = meeting.summary
-        if not summary:
+        if not summary or not summary.strip():
             return
 
         print_section("AI Summary")
@@ -195,10 +207,10 @@ class ShowCommand:
             meeting: Meeting to display
         """
         notes = meeting.human_notes
-        if not notes:
+        if not notes or not notes.strip():
             return
 
-        print_section("Human Notes")
+        print_section("Notes")
         print(notes)
 
     def _show_tags(self, meeting: Meeting) -> None:
@@ -320,6 +332,7 @@ class ShowCommand:
 
             # Determine what to show
             show_transcript = self.args.transcript or self.args.all
+            show_notes = self.args.notes or self.args.all
             show_summary = self.args.summary or self.args.all
             show_metadata = self.args.metadata or self.args.all
 
