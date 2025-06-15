@@ -51,7 +51,7 @@ class ShowCommand:
         )
 
         parser.add_argument(
-            '--notes',
+            '--summary',
             action='store_true',
             help='Include human-taken meeting notes'
         )
@@ -320,7 +320,6 @@ class ShowCommand:
 
             # Determine what to show
             show_transcript = self.args.transcript or self.args.all
-            show_notes = self.args.notes or self.args.all
             show_summary = self.args.summary or self.args.all
             show_metadata = self.args.metadata or self.args.all
 

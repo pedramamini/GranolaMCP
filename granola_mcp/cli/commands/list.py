@@ -7,12 +7,12 @@ including date ranges, title search, and participant filtering.
 
 import argparse
 import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from ...core.parser import GranolaParser
 from ...core.meeting import Meeting
 from ...utils.date_parser import parse_date, get_date_range
 from ..formatters.colors import (
-    Colors, colorize, format_duration, format_participant_count,
+    Colors, colorize, format_duration,
     format_meeting_id, print_error, print_info, muted
 )
 from ..formatters.table import Table, TableAlignment
@@ -73,6 +73,12 @@ class ListCommand:
             '--participant',
             type=str,
             help='Filter meetings by participant email/name'
+        )
+
+        parser.add_argument(
+            '--folder',
+            type=str,
+            help='Filter meetings by folder/list name (case-insensitive)'
         )
 
         # Sorting options
@@ -193,6 +199,29 @@ class ListCommand:
 
         return filtered_meetings
 
+    def _filter_meetings_by_folder(self, meetings: List[Meeting]) -> List[Meeting]:
+        """
+        Filter meetings by folder/list name.
+
+        Args:
+            meetings: List of meetings to filter
+
+        Returns:
+            List[Meeting]: Filtered meetings
+        """
+        if not self.args.folder:
+            return meetings
+
+        search_term = self.args.folder.lower()
+        filtered_meetings = []
+
+        for meeting in meetings:
+            folder_name = meeting.folder_name or ""
+            if search_term in folder_name.lower():
+                filtered_meetings.append(meeting)
+
+        return filtered_meetings
+
     def _sort_meetings(self, meetings: List[Meeting]) -> List[Meeting]:
         """
         Sort meetings by specified criteria.
@@ -216,6 +245,42 @@ class ListCommand:
 
         return sorted(meetings, key=sort_key, reverse=self.args.reverse)
 
+    def _calculate_stats(self, meetings: List[Meeting]) -> Dict[str, Any]:
+        """
+        Calculate statistics for the meetings.
+
+        Args:
+            meetings: List of meetings to calculate stats for
+
+        Returns:
+            Dict[str, Any]: Statistics dictionary
+        """
+        stats = {
+            'total_meetings': len(meetings),
+            'total_duration_seconds': 0,
+            'meetings_with_duration': 0,
+            'unique_dates': set()
+        }
+
+        for meeting in meetings:
+            if meeting.duration:
+                stats['total_duration_seconds'] += meeting.duration.total_seconds()
+                stats['meetings_with_duration'] += 1
+            
+            if meeting.start_time:
+                # Track unique dates (just the date part, not time)
+                date_only = meeting.start_time.date()
+                stats['unique_dates'].add(date_only)
+
+        stats['unique_days'] = len(stats['unique_dates'])
+        stats['avg_hours_per_day'] = 0
+
+        if stats['unique_days'] > 0 and stats['total_duration_seconds'] > 0:
+            total_hours = stats['total_duration_seconds'] / 3600
+            stats['avg_hours_per_day'] = total_hours / stats['unique_days']
+
+        return stats
+
     def _format_table_output(self, meetings: List[Meeting]) -> None:
         """
         Format meetings as a table.
@@ -228,13 +293,15 @@ class ListCommand:
             return
 
         # Create table
-        headers = ['ID', 'Title', 'Date', 'Duration', 'Participants']
+        headers = ['ID', 'Title', 'Date', 'Duration', 'Transcript', 'Summary', 'Folder']
         alignments = [
             TableAlignment.LEFT,
             TableAlignment.LEFT,
             TableAlignment.LEFT,
             TableAlignment.RIGHT,
-            TableAlignment.CENTER
+            TableAlignment.RIGHT,
+            TableAlignment.RIGHT,
+            TableAlignment.LEFT
         ]
 
         table = Table(headers, alignments)
@@ -252,15 +319,74 @@ class ListCommand:
             if meeting.start_time:
                 date_str = meeting.start_time.strftime("%m/%d %H:%M")
 
-            duration_str = format_duration(
-                meeting.duration.total_seconds() if meeting.duration else None
-            )
+            # Try to get actual meeting duration
+            duration_str = muted("Unknown")
+            
+            # First try the meeting's duration property (uses start/end times)
+            if meeting.duration:
+                duration_str = format_duration(meeting.duration.total_seconds())
+            else:
+                # Try to get duration from transcript timing
+                if meeting.has_transcript():
+                    try:
+                        transcript = meeting.transcript
+                        segments = transcript.segments
+                        if segments and len(segments) > 0:
+                            first = segments[0]
+                            last = segments[-1]
+                            if hasattr(last, 'end_time') and hasattr(first, 'start_time') and last.end_time and first.start_time:
+                                duration_seconds = last.end_time - first.start_time
+                                if duration_seconds > 60:  # Only show if > 1 minute
+                                    duration_str = format_duration(duration_seconds)
+                    except:
+                        pass
 
-            participant_count = format_participant_count(len(meeting.participants))
+            # Get transcript word count
+            transcript_str = muted("--")
+            if meeting.has_transcript():
+                transcript = meeting.transcript
+                word_count = transcript.word_count
+                if word_count > 0:
+                    if word_count >= 1000:
+                        transcript_str = f"{word_count // 1000:.1f}k"
+                    else:
+                        transcript_str = str(word_count)
 
-            table.add_row([meeting_id, title, date_str, duration_str, participant_count])
+            # Get summary word count  
+            summary_str = muted("--")
+            summary = meeting.summary
+            if summary:
+                word_count = len(summary.split())
+                if word_count > 0:
+                    summary_str = str(word_count)
+
+            # Get folder name
+            folder_str = meeting.folder_name or muted("--")
+            if folder_str and len(folder_str) > 15:
+                folder_str = folder_str[:12] + "..."
+
+            table.add_row([meeting_id, title, date_str, duration_str, transcript_str, summary_str, folder_str])
 
         table.print()
+
+        # Add statistics at the bottom
+        stats = self._calculate_stats(meetings)
+        if stats['total_meetings'] > 0:
+            print()  # Empty line before stats
+            total_duration_str = format_duration(stats['total_duration_seconds'])
+            
+            # Format average hours per day
+            avg_hours = stats['avg_hours_per_day']
+            if avg_hours >= 1:
+                avg_str = f"{avg_hours:.1f}h"
+            elif avg_hours > 0:
+                avg_minutes = avg_hours * 60
+                avg_str = f"{avg_minutes:.0f}m"
+            else:
+                avg_str = "0m"
+
+            print(f"📊 Total meeting time: {colorize(total_duration_str, Colors.CYAN)}")
+            print(f"📈 Average per day ({stats['unique_days']} days): {colorize(avg_str, Colors.GREEN)}")
 
     def _format_simple_output(self, meetings: List[Meeting]) -> None:
         """
@@ -331,6 +457,7 @@ class ListCommand:
             meetings = self._filter_meetings_by_date(meetings)
             meetings = self._filter_meetings_by_title(meetings)
             meetings = self._filter_meetings_by_participant(meetings)
+            meetings = self._filter_meetings_by_folder(meetings)
 
             # Sort meetings
             meetings = self._sort_meetings(meetings)
