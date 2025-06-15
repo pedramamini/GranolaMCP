@@ -156,6 +156,28 @@ class MCPTools:
 
         return matching_meetings
 
+    def list_meetings(self, from_date: Optional[str] = None,
+                     to_date: Optional[str] = None,
+                     limit: Optional[int] = None) -> Dict[str, Any]:
+        """
+        List meetings with optional date range and limit filters.
+
+        Args:
+            from_date: Start date filter (default: 3 days ago if no date filters specified)
+            to_date: End date filter
+            limit: Maximum number of results
+
+        Returns:
+            Dict containing meeting list
+        """
+        return self.search_meetings(
+            query=None,
+            from_date=from_date,
+            to_date=to_date,
+            participant=None,
+            limit=limit
+        )
+
     def search_meetings(self, query: Optional[str] = None,
                        from_date: Optional[str] = None,
                        to_date: Optional[str] = None,
@@ -848,7 +870,9 @@ class MCPTools:
         Returns:
             Dict containing tool execution results
         """
-        if tool_name == "search_meetings":
+        if tool_name == "list_meetings":
+            return self.list_meetings(**arguments)
+        elif tool_name == "search_meetings":
             return self.search_meetings(**arguments)
         elif tool_name == "get_meeting":
             return self.get_meeting(**arguments)
@@ -875,6 +899,27 @@ class MCPTools:
             List of tool schema definitions
         """
         return [
+            {
+                "name": "list_meetings",
+                "description": "List recent meetings with optional date range filters. Defaults to last 3 days if no date filters specified. Use this tool to get a simple list of meetings without search criteria.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "from_date": {
+                            "type": "string",
+                            "description": "Start date (ISO format or relative like '30d', '1w', '3d') (optional, defaults to 3d if no date filters)"
+                        },
+                        "to_date": {
+                            "type": "string",
+                            "description": "End date (ISO format or relative like '1d') (optional)"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Maximum number of results (optional)"
+                        }
+                    }
+                }
+            },
             {
                 "name": "search_meetings",
                 "description": "Search meetings with flexible filters including text search, date range, and participant filters. Defaults to last 3 days if no date filters specified.",

@@ -1,27 +1,47 @@
 # GranolaMCP
 
-A Python library for interfacing with Granola.ai meeting data using 100% native Python (no external dependencies).
+A comprehensive Python library and CLI tool for accessing and analyzing Granola.ai meeting data, featuring a complete MCP (Model Context Protocol) server for AI integration.
 
 ## Overview
 
-GranolaMCP provides programmatic access to Granola.ai meeting data from JSON cache files, with support for:
+GranolaMCP provides complete access to Granola.ai meeting data through multiple interfaces:
 
-- **Core Foundation** (Phase 1) - JSON parsing, timezone conversion, date parsing
-- **CLI Tools** (Phase 2) - Command-line interface for data access
-- **MCP Server** (Phase 3) - Model Context Protocol server implementation
-- **Statistics & Visualization** (Phase 4) - Analytics and ASCII charts
+- **📚 Python Library** - Programmatic access to meetings, transcripts, and summaries
+- **💻 Command Line Interface** - Rich CLI with advanced filtering and analytics
+- **🤖 MCP Server** - Model Context Protocol server for AI integration (Claude, etc.)
+- **📊 Analytics & Visualization** - Comprehensive statistics with ASCII charts
 
-## Features
+## ✨ Key Features
 
-- 🔍 **JSON Cache Parsing** - Double JSON parsing for Granola cache files
-- 🕐 **Timezone Conversion** - UTC to CST conversion using Python's zoneinfo
-- 📅 **Flexible Date Parsing** - Support for relative (3d, 24h, 1w) and absolute (YYYY-MM-DD) dates
-- 📝 **Meeting & Transcript Models** - Rich data models for meetings and transcripts
-- 💻 **CLI Interface** - Full-featured command-line tools for data exploration
-- 📊 **Statistics & Analytics** - Comprehensive meeting analytics with ASCII visualizations
-- 📈 **ASCII Charts** - Beautiful terminal-friendly charts and graphs
-- ⚙️ **Configuration Management** - Simple .env file parsing without dependencies
-- 🐍 **Pure Python** - No external dependencies, Python 3.12+ standard library only
+### Core Data Access
+- 🔍 **Smart JSON Parsing** - Handles Granola's complex double-JSON cache structure
+- 📝 **AI Summary Extraction** - Separates AI-generated summaries from human notes
+- 💬 **Full Transcript Access** - Complete speaker-identified transcripts with timing
+- 📁 **Folder Organization** - Meeting organization by folders (OPSWAT, Mozilla, Personal, etc.)
+- 🕐 **Accurate Duration Calculation** - Real meeting duration from transcript timing
+- 🏷️ **Rich Metadata** - Participants, timestamps, and meeting context
+
+### Advanced CLI Interface
+- 🎯 **Intelligent Filtering** - Filter by date, participant, title, or folder
+- 📊 **Table Display** - Clean tables showing transcript/summary word counts
+- 🔍 **Smart Search** - Search across titles, content, and participants
+- 📈 **Analytics Dashboard** - Meeting frequency, duration patterns, and trends
+- 🎨 **Beautiful Output** - Color-coded, formatted terminal displays
+- 📄 **Export Capabilities** - Export to markdown with full formatting
+
+### MCP Server for AI Integration
+- 🤖 **8 Comprehensive Tools** - Complete meeting data access for AI assistants
+- 🔌 **Claude Desktop Integration** - Ready-to-use configuration for Claude
+- 📡 **JSON-RPC Protocol** - Standard MCP protocol implementation
+- ⚡ **Real-time Access** - Live access to your latest meeting data
+- 🛡️ **Robust Error Handling** - Graceful handling of missing data and errors
+
+### Enterprise-Ready Features
+- 🐍 **Zero Dependencies** - Pure Python standard library only
+- ⚙️ **Flexible Configuration** - Environment variables, .env files, CLI arguments
+- 🕐 **Timezone Aware** - Proper UTC to local timezone conversion
+- 📅 **Flexible Date Parsing** - Relative (3d, 24h, 1w) and absolute dates
+- 🎯 **Production Ready** - Comprehensive error handling and logging
 
 ## Installation
 
@@ -114,65 +134,191 @@ print(f"UTC: {utc_time}")
 print(f"CST: {cst_time}")
 ```
 
-## CLI Usage
+## 💻 CLI Usage
 
-The CLI provides powerful commands for exploring and analyzing meeting data:
+The CLI provides powerful commands for exploring and analyzing meeting data with advanced features:
 
-### List Meetings
+### List Meetings with Rich Display
 ```bash
-# List recent meetings
+# List recent meetings with word counts and folders
 python -m granola_mcp list --last 7d
 
-# List meetings in date range
-python -m granola_mcp list --from 2025-01-01 --to 2025-01-31
+# Filter by folder (OPSWAT, Mozilla, Personal, etc.)
+python -m granola_mcp list --folder Mozilla --limit 10
 
 # Search meetings by title
-python -m granola_mcp list --title-contains "standup"
+python -m granola_mcp list --title-contains "standup" --folder OPSWAT
 
-# Filter by participant
-python -m granola_mcp list --participant "john@example.com"
+# Filter by participant and date range
+python -m granola_mcp list --participant "john@example.com" --from 30d
+
+# Sort by different criteria
+python -m granola_mcp list --sort-by duration --reverse --limit 10
 ```
+
+**Table Output Features:**
+- Meeting ID (shortened for readability)
+- Title with smart truncation
+- Date and time in local timezone
+- **Accurate duration** from transcript timing
+- **Transcript word count** (6.0k format for large numbers)
+- **AI Summary word count** (from extracted summaries)
+- **Folder organization** (Mozilla, OPSWAT, Personal, etc.)
 
 ### Show Meeting Details
 ```bash
-# Show meeting details
+# Show meeting overview with availability indicators
 python -m granola_mcp show <meeting-id>
 
-# Show meeting with transcript
+# Show AI-generated summary (structured content)
+python -m granola_mcp show <meeting-id> --summary
+
+# Show human notes/transcript content
+python -m granola_mcp show <meeting-id> --notes
+
+# Show full transcript with speakers
 python -m granola_mcp show <meeting-id> --transcript
+
+# Show everything including metadata
+python -m granola_mcp show <meeting-id> --all
 ```
+
+**Meeting Display Features:**
+- Clear availability indicators (AI Summary: Available/Not available)
+- Separated AI summaries vs human notes
+- Full speaker-identified transcripts
+- Rich metadata with proper timezone conversion
+- Participant lists and tags
 
 ### Export Meetings
 ```bash
-# Export meeting to markdown
+# Export meeting to markdown with full formatting
 python -m granola_mcp export <meeting-id>
 
-# Save to file
+# Export without transcript for summaries only
+python -m granola_mcp export <meeting-id> --no-transcript
+
+# Save to file with proper formatting
 python -m granola_mcp export <meeting-id> > meeting.md
 ```
 
-### Statistics & Analytics
+### Statistics & Analytics Dashboard
 ```bash
-# Comprehensive statistics overview
+# Comprehensive overview with meeting statistics
 python -m granola_mcp stats --summary
 
-# Meeting frequency analysis
+# Meeting frequency analysis with ASCII charts
 python -m granola_mcp stats --meetings-per-day --last 30d
 python -m granola_mcp stats --meetings-per-week --last 12w
 python -m granola_mcp stats --meetings-per-month --last 6m
 
-# Duration and participant analysis
+# Duration analysis (only for meetings with transcripts)
 python -m granola_mcp stats --duration-distribution
+
+# Participant collaboration patterns
 python -m granola_mcp stats --participant-frequency
 
-# Time pattern analysis
+# Time pattern analysis (peak hours, busiest days)
 python -m granola_mcp stats --time-patterns
 
-# Content analysis
+# Content analysis with word counts
 python -m granola_mcp stats --word-analysis
 
-# All statistics with ASCII charts
+# Complete analytics dashboard
 python -m granola_mcp stats --all
+```
+
+## 🤖 MCP Server for AI Integration
+
+Start the MCP server to integrate with AI assistants like Claude Desktop:
+
+```bash
+# Start MCP server
+python -m granola_mcp.mcp
+
+# Start with debug logging
+python -m granola_mcp.mcp --debug
+
+# Start with custom cache path
+python -m granola_mcp.mcp --cache-path "/path/to/cache.json"
+```
+
+### Claude Desktop Integration
+
+Add to your `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "granola-mcp": {
+      "command": "python",
+      "args": ["-m", "granola_mcp.mcp"],
+      "env": {
+        "GRANOLA_CACHE_PATH": "/Users/[username]/Library/Application Support/Granola/cache-v3.json"
+      }
+    }
+  }
+}
+```
+
+### Available MCP Tools
+
+The server provides 9 comprehensive tools:
+
+1. **list_meetings** - Simple meeting list with date filters (defaults to last 3 days)
+2. **search_meetings** - Advanced search with text, participant, and date filters
+3. **get_meeting** - Complete meeting details with metadata
+4. **get_transcript** - Full transcript with speaker identification
+5. **get_meeting_notes** - Structured AI summaries and human notes
+6. **list_participants** - Participant analysis with meeting history
+7. **get_statistics** - Generate analytics (summary, frequency, duration, patterns)
+8. **export_meeting** - Export meetings in markdown format
+9. **analyze_patterns** - Analyze meeting patterns and trends
+
+### MCP Usage Examples
+
+```json
+// List recent meetings (last 3 days by default)  
+{
+  "name": "list_meetings",
+  "arguments": {
+    "limit": 10
+  }
+}
+
+// List meetings from last week
+{
+  "name": "list_meetings", 
+  "arguments": {
+    "from_date": "7d",
+    "limit": 5
+  }
+}
+
+// Search meetings with text query
+{
+  "name": "search_meetings",
+  "arguments": {
+    "query": "project review",
+    "from_date": "7d"
+  }
+}
+
+// Get complete meeting details
+{
+  "name": "get_meeting",
+  "arguments": {
+    "meeting_id": "f47f8acd-70bd-49b7-8b0d-83c49eee07d1"
+  }
+}
+
+// Get meeting statistics
+{
+  "name": "get_statistics",
+  "arguments": {
+    "stat_type": "summary"
+  }
+}
 ```
 
 ## Project Structure
@@ -211,42 +357,6 @@ granola_mcp/
 
 - Python 3.12 or higher
 - No external dependencies (uses only Python standard library)
-
-## Development Status
-
-- ✅ **Phase 1: Core Foundation** - Complete
-  - JSON parsing with double parsing support
-  - Timezone conversion (UTC to CST)
-  - Date parsing (relative and absolute)
-  - Meeting and transcript data models
-  - Configuration management
-
-- ✅ **Phase 2: CLI Tools** - Complete
-  - Command-line interface with list, show, export commands
-  - Beautiful terminal output with colors and tables
-  - Advanced filtering and search capabilities
-  - Markdown export functionality
-
-- 🚧 **Phase 3: MCP Server** - Planned
-  - Model Context Protocol server
-  - Real-time data access
-  - Integration with AI tools
-
-- ✅ **Phase 4: Statistics & Visualization** - Complete
-  - Comprehensive meeting analytics and insights
-  - ASCII charts and visualizations (bar charts, histograms, time patterns)
-  - Meeting frequency analysis (daily, weekly, monthly)
-  - Duration distribution and participant frequency analysis
-  - Time pattern analysis (peak hours, busiest days)
-  - Content analysis (transcript word counts)
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
 
 ## License
 
