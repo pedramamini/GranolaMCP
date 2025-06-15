@@ -156,6 +156,53 @@ class MCPTools:
 
         return matching_meetings
 
+    def get_recent_meetings(self, count: int = 10) -> Dict[str, Any]:
+        """
+        Get the most recent X meetings, going back as far as needed.
+
+        Args:
+            count: Number of recent meetings to return (default: 10)
+
+        Returns:
+            Dict containing the most recent meetings
+        """
+        try:
+            meetings = self._get_meetings()
+
+            # Sort all meetings by start time (most recent first)
+            meetings_with_dates = [m for m in meetings if m.start_time]
+            meetings_with_dates.sort(key=lambda m: m.start_time, reverse=True)
+
+            # Take the requested number of most recent meetings
+            recent_meetings = meetings_with_dates[:count]
+
+            # Format results (reuse the same format as search_meetings)
+            results = []
+            for meeting in recent_meetings:
+                result = {
+                    "id": meeting.id,
+                    "title": meeting.title,
+                    "start_time": meeting.start_time.isoformat() if meeting.start_time else None,
+                    "duration_minutes": int(meeting.duration.total_seconds() / 60) if meeting.duration else None,
+                    "participant_count": len(meeting.participants),
+                    "has_transcript": meeting.has_transcript(),
+                    "summary": meeting.summary[:200] + "..." if meeting.summary and len(meeting.summary) > 200 else meeting.summary
+                }
+                results.append(result)
+
+            return {
+                "total_found": len(results),
+                "meetings": results,
+                "filters_applied": {
+                    "type": "recent_meetings",
+                    "count_requested": count,
+                    "total_meetings_in_cache": len(meetings)
+                }
+            }
+
+        except Exception as e:
+            raise MCPToolError(f"Failed to get recent meetings: {e}")
+
     def list_meetings(self, from_date: Optional[str] = None,
                      to_date: Optional[str] = None,
                      limit: Optional[int] = None) -> Dict[str, Any]:
@@ -870,7 +917,9 @@ class MCPTools:
         Returns:
             Dict containing tool execution results
         """
-        if tool_name == "list_meetings":
+        if tool_name == "get_recent_meetings":
+            return self.get_recent_meetings(**arguments)
+        elif tool_name == "list_meetings":
             return self.list_meetings(**arguments)
         elif tool_name == "search_meetings":
             return self.search_meetings(**arguments)
@@ -899,6 +948,21 @@ class MCPTools:
             List of tool schema definitions
         """
         return [
+            {
+                "name": "get_recent_meetings",
+                "description": "Get the most recent X meetings, sorted by date, going back as far as needed to find the requested number. Use this when you need exactly X recent meetings regardless of date range.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "count": {
+                            "type": "integer",
+                            "description": "Number of recent meetings to return (default: 10)",
+                            "minimum": 1,
+                            "maximum": 100
+                        }
+                    }
+                }
+            },
             {
                 "name": "list_meetings",
                 "description": "List recent meetings with optional date range filters. Defaults to last 3 days if no date filters specified. Use this tool to get a simple list of meetings without search criteria.",

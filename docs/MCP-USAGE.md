@@ -180,8 +180,8 @@ python verify_mcp_server.py --cache-path "/path/to/cache.json"
 🔍 Verifying GranolaMCP MCP Server...
 ✅ MCP Server initialized successfully
    Server: granola-mcp v1.0.0
-   Available tools: 9
-   Tools: list_meetings, search_meetings, get_meeting, get_transcript, get_meeting_notes, list_participants, get_statistics, export_meeting, analyze_patterns
+   Available tools: 10
+   Tools: get_recent_meetings, list_meetings, search_meetings, get_meeting, get_transcript, get_meeting_notes, list_participants, get_statistics, export_meeting, analyze_patterns
 
 🎉 Verification successful! The MCP server is ready for use.
 
@@ -286,10 +286,35 @@ print("Server initialized:", response)
 
 ## Available MCP Tools
 
-The GranolaMCP server provides 9 comprehensive tools for accessing meeting data:
+The GranolaMCP server provides 10 comprehensive tools for accessing meeting data:
 
-### 1. list_meetings
-List recent meetings with optional date range filters. **Defaults to last 3 days** if no date filters are specified. This is the primary tool for getting a simple list of meetings.
+### 1. get_recent_meetings
+Get the most recent X meetings, sorted by date, going back as far as needed to find the requested number. **Use this when you need exactly X recent meetings regardless of date range.**
+
+**Parameters:**
+- `count` (optional): Number of recent meetings to return (default: 10, min: 1, max: 100)
+
+**Examples:**
+```json
+{
+  "name": "get_recent_meetings",
+  "arguments": {
+    "count": 5
+  }
+}
+```
+
+```json
+{
+  "name": "get_recent_meetings",
+  "arguments": {
+    "count": 20
+  }
+}
+```
+
+### 2. list_meetings
+List recent meetings with optional date range filters. **Defaults to last 3 days** if no date filters are specified. This is useful for getting meetings within a specific time window.
 
 **Parameters:**
 - `from_date` (optional): Start date (ISO format or relative like '30d', '1w', '3d'). Defaults to '3d' if no date filters specified
@@ -316,7 +341,7 @@ List recent meetings with optional date range filters. **Defaults to last 3 days
 }
 ```
 
-### 2. search_meetings
+### 3. search_meetings
 Search meetings with flexible filters including text search and participant filters. **Defaults to last 3 days** if no date filters are specified.
 
 **Parameters:**
@@ -348,7 +373,7 @@ Search meetings with flexible filters including text search and participant filt
 ```
 *Note: This will search the last 3 days by default*
 
-### 3. get_meeting
+### 4. get_meeting
 Get complete meeting details including metadata and transcript info.
 
 **Parameters:**
@@ -364,7 +389,7 @@ Get complete meeting details including metadata and transcript info.
 }
 ```
 
-### 4. get_transcript
+### 5. get_transcript
 Get full transcript for a specific meeting.
 
 **Parameters:**
@@ -384,13 +409,13 @@ Get full transcript for a specific meeting.
 }
 ```
 
-### 5. get_meeting_notes
+### 6. get_meeting_notes
 Get structured notes and summary for a meeting.
 
 **Parameters:**
 - `meeting_id` (required): Meeting ID
 
-### 6. list_participants
+### 7. list_participants
 List all participants with frequency data and meeting history.
 
 **Parameters:**
@@ -398,7 +423,7 @@ List all participants with frequency data and meeting history.
 - `to_date` (optional): End date filter
 - `min_meetings` (optional): Minimum meeting count filter
 
-### 7. get_statistics
+### 8. get_statistics
 Generate meeting statistics and analytics.
 
 **Parameters:**
@@ -411,7 +436,7 @@ Generate meeting statistics and analytics.
 - `from_date` (optional): Start date filter
 - `to_date` (optional): End date filter
 
-### 8. export_meeting
+### 9. export_meeting
 Export meeting in markdown format.
 
 **Parameters:**
@@ -419,7 +444,7 @@ Export meeting in markdown format.
 - `include_transcript` (optional): Include full transcript (default: true)
 - `include_metadata` (optional): Include meeting metadata (default: true)
 
-### 9. analyze_patterns
+### 10. analyze_patterns
 Analyze meeting patterns and trends.
 
 **Parameters:**

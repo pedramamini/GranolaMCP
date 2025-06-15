@@ -263,21 +263,30 @@ Add to your `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ### Available MCP Tools
 
-The server provides 9 comprehensive tools:
+The server provides 10 comprehensive tools:
 
-1. **list_meetings** - Simple meeting list with date filters (defaults to last 3 days)
-2. **search_meetings** - Advanced search with text, participant, and date filters
-3. **get_meeting** - Complete meeting details with metadata
-4. **get_transcript** - Full transcript with speaker identification
-5. **get_meeting_notes** - Structured AI summaries and human notes
-6. **list_participants** - Participant analysis with meeting history
-7. **get_statistics** - Generate analytics (summary, frequency, duration, patterns)
-8. **export_meeting** - Export meetings in markdown format
-9. **analyze_patterns** - Analyze meeting patterns and trends
+1. **get_recent_meetings** - Get the most recent X meetings (goes back as far as needed)
+2. **list_meetings** - Simple meeting list with date filters (defaults to last 3 days)
+3. **search_meetings** - Advanced search with text, participant, and date filters
+4. **get_meeting** - Complete meeting details with metadata
+5. **get_transcript** - Full transcript with speaker identification
+6. **get_meeting_notes** - Structured AI summaries and human notes
+7. **list_participants** - Participant analysis with meeting history
+8. **get_statistics** - Generate analytics (summary, frequency, duration, patterns)
+9. **export_meeting** - Export meetings in markdown format
+10. **analyze_patterns** - Analyze meeting patterns and trends
 
 ### MCP Usage Examples
 
 ```json
+// Get the 5 most recent meetings (regardless of date)
+{
+  "name": "get_recent_meetings",
+  "arguments": {
+    "count": 5
+  }
+}
+
 // List recent meetings (last 3 days by default)  
 {
   "name": "list_meetings",
