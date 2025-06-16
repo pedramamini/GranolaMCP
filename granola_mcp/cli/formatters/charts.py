@@ -435,7 +435,9 @@ def create_summary_box(stats: Dict[str, Any], title: str = "Meeting Statistics")
         else:
             value_str = str(value)
 
-        content = f"{key}: {colorize(value_str, Colors.BRIGHT_CYAN)}"
+        colored_value = colorize(value_str, Colors.BRIGHT_CYAN)
+        content = f"{key}: {colored_value}"
+        # Calculate padding using original value_str length (without color codes)
         padding = box_width - len(key) - len(value_str) - 4
         line = ChartConfig.VERTICAL + f" {content}" + " " * padding + ChartConfig.VERTICAL
         lines.append(line)

@@ -123,6 +123,13 @@ class StatsCommand:
             help='Show all available statistics'
         )
 
+        # Filtering options
+        parser.add_argument(
+            '--folder',
+            type=str,
+            help='Filter meetings by folder name'
+        )
+
         # Output options
         parser.add_argument(
             '--no-charts',
@@ -171,6 +178,29 @@ class StatsCommand:
         except ValueError as e:
             print_error(f"Invalid date format: {e}")
             return []
+
+    def _filter_meetings_by_folder(self, meetings: List[Meeting]) -> List[Meeting]:
+        """
+        Filter meetings by folder name.
+
+        Args:
+            meetings: List of meetings to filter
+
+        Returns:
+            List[Meeting]: Filtered meetings
+        """
+        if not self.args.folder:
+            return meetings
+
+        folder_name = self.args.folder.lower()
+        filtered_meetings = []
+        
+        for meeting in meetings:
+            meeting_folder = meeting.folder_name
+            if meeting_folder and meeting_folder.lower() == folder_name:
+                filtered_meetings.append(meeting)
+
+        return filtered_meetings
 
     def _analyze_meetings_per_day(self, meetings: List[Meeting]) -> None:
         """Analyze and display meetings per day."""
@@ -617,6 +647,13 @@ class StatsCommand:
 
             if self.args.verbose and len(meetings) != len(meeting_data):
                 print_info(f"Filtered to {len(meetings)} meetings based on date criteria")
+
+            # Apply folder filters
+            original_count = len(meetings)
+            meetings = self._filter_meetings_by_folder(meetings)
+
+            if self.args.verbose and len(meetings) != original_count and self.args.folder:
+                print_info(f"Filtered to {len(meetings)} meetings in folder '{self.args.folder}'")
 
             # Execute the appropriate analysis
             if self.args.meetings_per_day:
