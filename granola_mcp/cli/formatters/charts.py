@@ -413,8 +413,8 @@ def create_summary_box(stats: Dict[str, Any], title: str = "Meeting Statistics")
     """
     lines = []
 
-    # Calculate box width
-    max_width = max(len(str(v)) + len(k) + 4 for k, v in stats.items())
+    # Calculate box width (add 1 extra space to ensure proper right padding)
+    max_width = max(len(str(v)) + len(k) + 5 for k, v in stats.items())
     box_width = max(max_width, len(title) + 4, 30)
 
     # Top border
@@ -439,6 +439,8 @@ def create_summary_box(stats: Dict[str, Any], title: str = "Meeting Statistics")
         content = f"{key}: {colored_value}"
         # Calculate padding using original value_str length (without color codes)
         padding = box_width - len(key) - len(value_str) - 5
+        # Ensure minimum padding of 1 space before right border
+        padding = max(padding, 1)
         line = ChartConfig.VERTICAL + f" {content}" + " " * padding + ChartConfig.VERTICAL
         lines.append(line)
 
