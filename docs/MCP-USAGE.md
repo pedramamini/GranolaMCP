@@ -2,6 +2,8 @@
 
 This guide provides comprehensive instructions for manually running the GranolaMCP MCP (Model Context Protocol) server, configuring it, testing it, and integrating it with LLM systems.
 
+**Data Source Note**: The MCP server operates exclusively on Granola's local cache file (`cache-v3.json`) and does not make any network requests to Granola's API. This ensures privacy, performance, and offline operation. While API-based access would be technically possible using credentials from Granola's `supabase.json` file, this implementation focuses on the cache-based approach.
+
 ## Table of Contents
 
 1. [Basic MCP Server Startup](#basic-mcp-server-startup)

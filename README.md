@@ -11,6 +11,17 @@ GranolaMCP provides complete access to Granola.ai meeting data through multiple 
 - **🤖 MCP Server** - Model Context Protocol server for AI integration (Claude, etc.)
 - **📊 Analytics & Visualization** - Comprehensive statistics with ASCII charts
 
+## Data Source
+
+**GranolaMCP operates entirely on local cache files** - it reads meeting data directly from Granola's local cache file (`cache-v3.json`) without making any API calls to Granola's servers. This approach provides:
+
+- **🔌 No Network Dependency** - Works completely offline
+- **⚡ Fast Access** - Direct file system access with no API rate limits  
+- **🔒 Privacy Focused** - Your meeting data never leaves your machine
+- **🛡️ No Authentication** - No need to manage API keys or tokens
+
+**Alternative Approach Available:** While not implemented in this library, it's technically possible to extract access tokens from Granola's `supabase.json` configuration file and communicate directly with the Granola API. However, the cache-based approach provides better performance, privacy, and reliability for most use cases.
+
 ## ✨ Key Features
 
 ### Core Data Access
