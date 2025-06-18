@@ -4,6 +4,17 @@
 
 A Python 3.12+ library providing programmatic, CLI, and MCP access to Granola.ai meeting data with live JSON parsing, beautiful terminal output, and comprehensive meeting management capabilities. **100% Native Python - No External Dependencies**.
 
+### Data Access Strategy
+
+**GranolaMCP uses a cache-based approach exclusively** - all data is read directly from Granola's local cache file (`cache-v3.json`) without any network communication. This design choice provides:
+
+- **Offline Operation**: Complete functionality without internet connectivity
+- **Performance**: Direct file system access eliminates API latency
+- **Privacy**: Meeting data remains on the local machine
+- **Reliability**: No dependency on Granola's server availability
+
+**Note**: While it would be technically feasible to implement API-based access by extracting authentication tokens from Granola's `supabase.json` configuration, this library intentionally focuses on the cache-based approach for optimal user experience.
+
 ## Project Structure
 
 ```
