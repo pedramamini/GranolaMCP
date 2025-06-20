@@ -13,6 +13,7 @@ from typing import Dict, Any, List, Optional, Union
 from ..core.parser import GranolaParser, GranolaParseError
 from ..core.meeting import Meeting
 from ..utils.date_parser import parse_date, get_date_range
+from ..core.timezone_utils import get_cst_timezone
 from ..cli.formatters.markdown import export_meeting_to_markdown
 
 
@@ -76,16 +77,18 @@ class MCPTools:
             return meetings
 
         try:
+            cst_tz = get_cst_timezone()
+            
             if from_date and to_date:
                 start_date, end_date = get_date_range(from_date, to_date)
             elif from_date:
                 start_date = parse_date(from_date)
-                end_date = datetime.datetime.now(start_date.tzinfo)
+                end_date = datetime.datetime.now(cst_tz)
             else:
                 # Only to_date specified
                 if to_date:
                     end_date = parse_date(to_date)
-                    start_date = datetime.datetime.min.replace(tzinfo=end_date.tzinfo)
+                    start_date = datetime.datetime.min.replace(tzinfo=cst_tz)
                 else:
                     return meetings
 
