@@ -38,7 +38,7 @@ class MCPServer:
 
         # MCP server info
         self.server_info = {
-            "name": "granola-mcp",
+            "name": "GranolaMCP",
             "version": "1.0.0",
             "description": "MCP server for Granola.ai meeting data access and analytics"
         }
