@@ -32,7 +32,7 @@ setup(
     description="A Python library for interfacing with Granola.ai meeting data",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/pedramamini/granola-mcp",
+    url="https://github.com/pedramamini/GranolaMCP",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -78,8 +78,8 @@ setup(
         "model-context-protocol",
     ],
     project_urls={
-        "Bug Reports": "https://github.com/pedramamini/granola-mcp/issues",
-        "Source": "https://github.com/pedramamini/granola-mcp",
-        "Documentation": "https://github.com/pedramamini/granola-mcp/blob/main/README.md",
+        "Bug Reports": "https://github.com/pedramamini/GranolaMCP/issues",
+        "Source": "https://github.com/pedramamini/GranolaMCP",
+        "Documentation": "https://github.com/pedramamini/GranolaMCP/blob/main/README.md",
     },
 )

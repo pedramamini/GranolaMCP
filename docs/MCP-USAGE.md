@@ -591,7 +591,7 @@ If you encounter issues not covered here:
 1. **Check the logs:** Always run with `--debug` first
 2. **Verify your setup:** Ensure cache file exists and is readable
 3. **Test with minimal data:** Try with a small cache file first
-4. **Check the GitHub issues:** [https://github.com/pedramamini/granola-mcp/issues](https://github.com/pedramamini/granola-mcp/issues)
+4. **Check the GitHub issues:** [https://github.com/pedramamini/GranolaMCP/issues](https://github.com/pedramamini/GranolaMCP/issues)
 
 ---
 

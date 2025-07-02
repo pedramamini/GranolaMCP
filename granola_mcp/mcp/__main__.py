@@ -39,7 +39,7 @@ The server communicates via STDIO using JSON-RPC 2.0 following the MCP protocol.
     parser.add_argument(
         "--version",
         action="version",
-        version="granola-mcp 1.0.0"
+        version="GranolaMCP 1.0.0"
     )
 
     args = parser.parse_args()

@@ -58,8 +58,8 @@ GranolaMCP provides complete access to Granola.ai meeting data through multiple 
 
 ```bash
 # Install from source
-git clone https://github.com/pedramamini/granola-mcp.git
-cd granola-mcp
+git clone https://github.com/pedramamini/GranolaMCP.git
+cd GranolaMCP
 pip install -e .
 
 # Or install from PyPI (when available)
