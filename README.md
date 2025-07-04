@@ -2,6 +2,17 @@
 
 A comprehensive Python library and CLI tool for accessing and analyzing Granola.ai meeting data, featuring a complete MCP (Model Context Protocol) server for AI integration.
 
+## 📋 Changelog
+
+### 2025-07-04 - New Collect Command 🎯
+- **NEW**: Added `granola collect` command for exporting your own words from meetings
+- **FEATURE**: Automatically filters microphone audio (your spoken words) vs system audio (what you heard)
+- **FEATURE**: Organizes exported text by day into `YYYY-MM-DD.txt` files
+- **FEATURE**: Supports flexible date ranges (`--last 7d`, `--from/--to`)
+- **FEATURE**: Optional timestamps and meeting metadata inclusion
+- **FEATURE**: Minimum word filtering to exclude short utterances
+- **USE CASE**: Perfect for creating LLM training datasets from your own speech
+
 ## Overview
 
 GranolaMCP provides complete access to Granola.ai meeting data through multiple interfaces:
@@ -238,6 +249,31 @@ python -m granola_mcp stats --word-analysis
 # Complete analytics dashboard
 python -m granola_mcp stats --all
 ```
+
+### Collect Your Own Words for LLM Training
+```bash
+# Collect your own words from last 7 days
+granola collect --last 7d --output-dir ./my-words
+
+# Collect from specific date range
+granola collect --from 2025-01-01 --to 2025-01-31 --output-dir ./january-words
+
+# Include timestamps and meeting metadata
+granola collect --last 30d --output-dir ./my-words --include-timestamps --include-meeting-info
+
+# Filter out very short utterances (minimum 3 words)
+granola collect --last 30d --output-dir ./my-words --min-words 3
+
+# Collect all available data
+granola collect --last 2y --output-dir ./complete-dataset --min-words 1
+```
+
+**Key Features:**
+- **Speaker Separation**: Automatically filters your words (microphone source) from what you heard (system source)
+- **Daily Organization**: Creates separate `YYYY-MM-DD.txt` files for each day
+- **LLM Ready**: Perfect format for creating training datasets from your own speech
+- **Flexible Filtering**: Date ranges, minimum word counts, optional metadata
+- **File Management**: Safely overwrites existing files with identical content
 
 ## 🤖 MCP Server for AI Integration
 

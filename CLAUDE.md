@@ -87,3 +87,7 @@ The MCP server provides 8 tools: `search_meetings`, `get_meeting`, `get_transcri
 3. **MCP Integration**: Enhance tools in `granola_mcp/mcp/tools.py`
 
 The project always reads from live cache files (no local caching) and loads all meetings into memory on initialization.
+
+## Development Guidelines
+
+- All temporary and data exploration tools should go under scratch/ and you should look there for existing testing/validation tools before writing new ones.

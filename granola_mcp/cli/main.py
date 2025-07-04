@@ -16,6 +16,7 @@ from .commands.show import ShowCommand
 from .commands.export import ExportCommand
 from .commands.stats import StatsCommand
 from .commands.json import JsonCommand
+from .commands.collect import CollectCommand
 from .formatters.colors import Colors, colorize
 
 
@@ -67,6 +68,10 @@ Examples:
   granola json
   granola json --compact
   granola json --sort-keys > cache_data.json
+
+  # Collect your own words from meetings
+  granola collect --last 7d --output-dir ./my-words
+  granola collect --from 2025-01-01 --to 2025-01-31 --output-dir ./january-words
 
 For more help on a specific command, use:
   granola <command> --help
@@ -145,6 +150,14 @@ For more help on a specific command, use:
         description='Extract the embedded JSON data from the Granola cache file and output as valid JSON'
     )
     JsonCommand.add_arguments(json_parser)
+
+    # Collect command
+    collect_parser = subparsers.add_parser(
+        'collect',
+        help='Collect your own words from meetings over a date range',
+        description='Export your own words (microphone audio) from meetings into daily text files'
+    )
+    CollectCommand.add_arguments(collect_parser)
 
     return parser
 
@@ -250,6 +263,9 @@ def main(argv: Optional[List[str]] = None) -> int:
             return command.execute()
         elif args.command == 'json':
             command = JsonCommand(granola_parser, args)
+            return command.execute()
+        elif args.command == 'collect':
+            command = CollectCommand(granola_parser, args)
             return command.execute()
         else:
             print(colorize(f"Unknown command: {args.command}", Colors.RED), file=sys.stderr)
