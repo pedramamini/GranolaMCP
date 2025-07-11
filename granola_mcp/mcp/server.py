@@ -263,12 +263,28 @@ class MCPServer:
         }
         self._send_response(response)
 
+    def _handle_notification(self, notification: Dict[str, Any]) -> None:
+        """
+        Handle incoming JSON-RPC notification.
+
+        Args:
+            notification: Parsed JSON-RPC notification (no id field)
+        """
+        method = notification.get("method")
+
+        if method == "notifications/initialized":
+            self.logger.info("Client initialization completed")
+            # No response needed for notifications
+        else:
+            self.logger.warning(f"Unknown notification method: {method}")
+            # Don't send error responses for notifications
+
     def _handle_request(self, request: Dict[str, Any]) -> None:
         """
         Handle incoming JSON-RPC request.
 
         Args:
-            request: Parsed JSON-RPC request
+            request: Parsed JSON-RPC request (has id field)
         """
         method = request.get("method")
 
@@ -300,9 +316,15 @@ class MCPServer:
                     continue
 
                 try:
-                    request = json.loads(line)
-                    self.logger.debug(f"Received request: {request}")
-                    self._handle_request(request)
+                    message = json.loads(line)
+                    self.logger.debug(f"Received message: {message}")
+                    
+                    # Distinguish between requests and notifications
+                    # Requests have an 'id' field, notifications do not
+                    if "id" in message:
+                        self._handle_request(message)
+                    else:
+                        self._handle_notification(message)
 
                 except json.JSONDecodeError as e:
                     self.logger.error(f"Invalid JSON received: {e}")
